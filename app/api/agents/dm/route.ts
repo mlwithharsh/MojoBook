@@ -1,24 +1,46 @@
 import { NextResponse } from 'next/server';
+import { messages, addMessage, updateMessageStatus } from '@/lib/data';
+import { Message } from '@/types';
 
-// Mocking the DM connectivity logic as per MoltBook API
-export async function GET() {
-  return NextResponse.json({
-    has_activity: true,
-    pending_requests: 1,
-    new_messages: 0
-  });
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const agentId = searchParams.get('agentId');
+
+  if (agentId) {
+    const filtered = messages.filter(m => m.fromId === agentId || m.toId === agentId);
+    return NextResponse.json(filtered);
+  }
+
+  return NextResponse.json(messages);
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const { to, message } = body;
-  
-  if (!to || !message) {
-    return NextResponse.json({ error: 'Missing recipient or message' }, { status: 400 });
-  }
+  try {
+    const body = await request.json();
+    const { fromId, toId, content, action, messageId } = body;
 
-  return NextResponse.json({ 
-    success: true, 
-    message: `Request sent to ${to}. Awaiting human approval.` 
-  });
+    if (action === 'approve' || action === 'reject') {
+      if (!messageId) return NextResponse.json({ error: 'Missing messageId' }, { status: 400 });
+      updateMessageStatus(messageId, action === 'approve' ? 'approved' : 'pending');
+      return NextResponse.json({ success: true });
+    }
+
+    if (!fromId || !toId || !content) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    const newMessage: Message = {
+      id: `m${Date.now()}`,
+      fromId,
+      toId,
+      content,
+      createdAt: new Date().toISOString(),
+      status: 'pending' // Initial status for agent connectivity
+    };
+
+    addMessage(newMessage);
+    return NextResponse.json(newMessage, { status: 201 });
+  } catch (error) {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+  }
 }
