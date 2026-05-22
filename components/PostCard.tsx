@@ -11,36 +11,57 @@ interface PostCardProps {
   mojo: Mojo | undefined;
 }
 
+/**
+ * Renders an individual post card with voting, engagement metrics, and community context.
+ * Implements optimistic UI updates for signal reinforcement (voting).
+ */
 export default function PostCard({ post, author, mojo }: PostCardProps) {
   const [votes, setVotes] = useState(post.upvotes - post.downvotes);
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
 
+  /** Handles the reinforcement or decay of a post signal */
   const handleVote = async (type: 'up' | 'down') => {
-    // Basic local optimistic update
-    const delta = type === 'up' ? 1 : -1;
-    if (userVote === type) return; // Already voted this way
+    const previousVote = userVote;
+    let newVote: 'up' | 'down' | null = type;
 
-    const adjustment = userVote === null ? delta : delta * 2;
+    // Toggle logic
+    if (previousVote === type) {
+        newVote = null;
+    }
+
+    // Local optimistic update
+    let adjustment = 0;
+    if (previousVote === type) {
+        adjustment = type === 'up' ? -1 : 1;
+    } else if (previousVote === null) {
+        adjustment = type === 'up' ? 1 : -1;
+    } else {
+        adjustment = type === 'up' ? 2 : -2;
+    }
+
     setVotes(prev => prev + adjustment);
-    setUserVote(type);
+    setUserVote(newVote);
 
     try {
       await fetch('/api/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId: post.id, voteType: type }),
+        body: JSON.stringify({ postId: post.id, voteType: type, previousVote: previousVote }),
       });
     } catch (error) {
       console.error('Failed to vote:', error);
-      // Revert on error if we wanted to be robust
+      // Revert on error
+      setVotes(prev => prev - adjustment);
+      setUserVote(previousVote);
     }
   };
 
   return (
-    <div className="bg-[#1A1A1B] border border-[#343536] hover:border-[#818384] rounded overflow-hidden flex transition-colors">
+    <div className="bg-[#1A1A1B] border border-[#343536] hover:border-[#818384] rounded overflow-hidden flex transition-colors shadow-sm">
+      {/* Voting Sidebar */}
       <div className="w-10 bg-[#151516] flex flex-col items-center py-2 gap-1">
         <button
-          onClick={(e) => { e.stopPropagation(); handleVote('up'); }}
+          onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleVote('up'); }}
           className={`hover:bg-[#272729] rounded p-0.5 transition-colors ${userVote === 'up' ? 'text-orange-500' : 'text-gray-400 hover:text-orange-500'}`}
         >
           <ArrowBigUp className="w-7 h-7" />
@@ -49,13 +70,14 @@ export default function PostCard({ post, author, mojo }: PostCardProps) {
           {votes}
         </span>
         <button
-          onClick={(e) => { e.stopPropagation(); handleVote('down'); }}
+          onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleVote('down'); }}
           className={`hover:bg-[#272729] rounded p-0.5 transition-colors ${userVote === 'down' ? 'text-blue-500' : 'text-gray-400 hover:text-blue-500'}`}
         >
           <ArrowBigDown className="w-7 h-7" />
         </button>
       </div>
 
+      {/* Post Content */}
       <div className="flex-1 p-2">
         <div className="flex items-center gap-1 text-xs text-gray-400 mb-2">
           {mojo && (
@@ -73,16 +95,16 @@ export default function PostCard({ post, author, mojo }: PostCardProps) {
         </div>
 
         <Link href={`/p/${post.id}`} className="block group">
-          <h2 className="text-lg font-semibold text-gray-200 mb-2 group-hover:text-white">{post.title}</h2>
-          <p className="text-sm text-gray-400 mb-3 line-clamp-3">{post.content}</p>
+          <h2 className="text-lg font-semibold text-gray-200 mb-2 group-hover:text-white transition-colors">{post.title}</h2>
+          <p className="text-sm text-gray-400 mb-3 line-clamp-3 leading-relaxed">{post.content}</p>
         </Link>
 
         <div className="flex items-center gap-4 text-gray-400">
-          <div className="flex items-center gap-1.5 hover:bg-[#272729] px-2 py-1.5 rounded text-xs font-bold cursor-pointer">
+          <Link href={`/p/${post.id}`} className="flex items-center gap-1.5 hover:bg-[#272729] px-2 py-1.5 rounded text-xs font-bold transition-colors">
             <MessageSquare className="w-5 h-5" />
             <span>{post.commentCount} Comments</span>
-          </div>
-          <div className="flex items-center gap-1.5 hover:bg-[#272729] px-2 py-1.5 rounded text-xs font-bold cursor-pointer">
+          </Link>
+          <div className="flex items-center gap-1.5 hover:bg-[#272729] px-2 py-1.5 rounded text-xs font-bold cursor-pointer transition-colors">
             <Share2 className="w-5 h-5" />
             <span>Share</span>
           </div>

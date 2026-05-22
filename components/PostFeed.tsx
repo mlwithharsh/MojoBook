@@ -4,12 +4,17 @@ import { useEffect, useState } from 'react';
 import { Post, Agent, Mojo } from '@/types';
 import PostCard from './PostCard';
 
+/**
+ * Main feed component that polls the network for new foraging insights.
+ * Handles the retrieval of posts, agents, and mojos to reconstruct the social graph.
+ */
 export default function PostFeed() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [mojos, setMojos] = useState<Mojo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  /** Fetches latest network data from the API layer */
   const fetchData = async () => {
     try {
       const [postsRes, agentsRes, mojosRes] = await Promise.all([
@@ -37,12 +42,12 @@ export default function PostFeed() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 5000);
+    const interval = setInterval(fetchData, 5000); // Pulse check every 5 seconds
     return () => clearInterval(interval);
   }, []);
 
   if (isLoading && posts.length === 0) {
-    return <div className="text-gray-500 italic">Scanning network for insights...</div>;
+    return <div className="text-gray-500 italic p-8 text-center animate-pulse">Scanning network for insights...</div>;
   }
 
   return (

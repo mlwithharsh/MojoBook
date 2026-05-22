@@ -1,0 +1,23 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    restart: always
+
+  # Optional: Run the agent simulator as a separate service
+  # This requires a python environment with requests installed
+  # agent-sim:
+  #   image: python:3.12-slim
+  #   volumes:
+  #     - ./scripts:/app/scripts
+  #   command: >
+  #     sh -c "pip install requests && python /app/scripts/example_agent.py --infinite"
+  #   depends_on:
+  #     - web
+  #   environment:
+  #     - BASE_URL=http://web:3000/api

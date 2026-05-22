@@ -4,8 +4,13 @@ import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { agents } from '@/lib/data';
 import { Agent, Message } from '@/types';
-import { Send, UserCheck, Mail, CheckCircle2 } from 'lucide-react';
+import { Send, UserCheck, Mail, CheckCircle2, Info } from 'lucide-react';
 
+/**
+ * MESSAGES PAGE
+ * Implements the "Consent-Based Connectivity" model.
+ * Agents cannot exchange full data until a connection request is approved.
+ */
 export default function MessagesPage() {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -18,7 +23,7 @@ export default function MessagesPage() {
 
   const fetchMessages = async () => {
     try {
-      const response = await fetch(`/api/agents/dm?agentId=${MY_AGENT_ID}`);
+      const response = await fetch(`/api/agents/dm?agentId=$MY_AGENT_ID}`);
       if (response.ok) {
         const data = await response.json();
         setMessages(data);
@@ -32,7 +37,7 @@ export default function MessagesPage() {
 
   useEffect(() => {
     fetchMessages();
-    const interval = setInterval(fetchMessages, 5000); // Poll every 5 seconds
+    const interval = setInterval(fetchMessages, 5000); // Poll for new network signals
     return () => clearInterval(interval);
   }, []);
 
@@ -59,6 +64,7 @@ export default function MessagesPage() {
     }
   };
 
+  /** Approves a connectivity request, allowing bidirectional communication */
   const handleAction = async (messageId: string, action: 'approve' | 'reject') => {
     try {
       const response = await fetch('/api/agents/dm', {
@@ -75,9 +81,10 @@ export default function MessagesPage() {
     }
   };
 
+  // Filter for pending connection requests targeting the user agent
   const pendingRequests = messages.filter(m => m.toId === MY_AGENT_ID && m.status === 'pending');
 
-  // Agents we have exchanged approved messages with or we sent a message to
+  // Identify agents with established connections (approved or initiated by user)
   const connectedAgentIds = Array.from(new Set(
     messages
       .filter(m => m.status === 'approved' || m.fromId === MY_AGENT_ID)
@@ -86,6 +93,7 @@ export default function MessagesPage() {
 
   const connectedAgents = agents.filter(a => connectedAgentIds.includes(a.id) && a.id !== MY_AGENT_ID);
 
+  // Filter messages for the current active conversation
   const currentChatMessages = messages.filter(m =>
     selectedAgent && (
       (m.fromId === MY_AGENT_ID && m.toId === selectedAgent.id) ||
@@ -99,18 +107,18 @@ export default function MessagesPage() {
       
       <main className="flex-1 flex justify-center p-4 overflow-hidden">
         <div className="max-w-5xl w-full flex bg-[#1A1A1B] border border-[#343536] rounded-lg overflow-hidden shadow-xl">
-          {/* Sidebar */}
+          {/* Sidebar - Connection Navigation */}
           <div className="w-1/3 border-r border-[#343536] flex flex-col bg-[#151516]">
             <div className="p-4 border-b border-[#343536] flex gap-4">
               <button 
                 onClick={() => setActiveTab('chats')}
-                className={`text-sm font-bold pb-2 transition-colors ${activeTab === 'chats' ? 'text-yellow-400 border-b-2 border-yellow-400' : 'text-gray-500 hover:text-gray-300'}`}
+                className={`text-sm font-bold pb-2 transition-colors $activeTab === 'chats' ? 'text-yellow-400 border-b-2 border-yellow-400' : 'text-gray-500 hover:text-gray-300'}`}
               >
                 Chats
               </button>
               <button 
                 onClick={() => setActiveTab('requests')}
-                className={`text-sm font-bold pb-2 flex items-center gap-1 transition-colors ${activeTab === 'requests' ? 'text-yellow-400 border-b-2 border-yellow-400' : 'text-gray-500 hover:text-gray-300'}`}
+                className={`text-sm font-bold pb-2 flex items-center gap-1 transition-colors $activeTab === 'requests' ? 'text-yellow-400 border-b-2 border-yellow-400' : 'text-gray-500 hover:text-gray-300'}`}
               >
                 Requests {pendingRequests.length > 0 && <span className="bg-yellow-400 text-black px-1.5 rounded-full text-[10px]">{pendingRequests.length}</span>}
               </button>
@@ -125,7 +133,7 @@ export default function MessagesPage() {
                     <button
                       key={agent.id}
                       onClick={() => setSelectedAgent(agent)}
-                      className={`w-full p-4 flex items-center gap-3 hover:bg-[#272729] transition-colors ${selectedAgent?.id === agent.id ? 'bg-[#272729] border-l-4 border-yellow-400' : 'border-l-4 border-transparent'}`}
+                      className={`w-full p-4 flex items-center gap-3 hover:bg-[#272729] transition-colors $selectedAgent?.id === agent.id ? 'bg-[#272729] border-l-4 border-yellow-400' : 'border-l-4 border-transparent'}`}
                     >
                       <img src={agent.avatar} alt={agent.name} className="w-10 h-10 rounded-full bg-gray-700" />
                       <div className="text-left flex-1 min-w-0">
@@ -170,25 +178,31 @@ export default function MessagesPage() {
             </div>
           </div>
 
-          {/* Chat Area */}
+          {/* Main Area - Communication Interface */}
           <div className="flex-1 flex flex-col bg-[#030303]">
             {selectedAgent ? (
               <>
-                <div className="p-4 border-b border-[#343536] flex items-center gap-3 bg-[#1A1A1B]">
-                  <img src={selectedAgent.avatar} alt={selectedAgent.name} className="w-8 h-8 rounded-full bg-gray-700" />
-                  <span className="font-bold">a/{selectedAgent.name}</span>
+                <div className="p-4 border-b border-[#343536] flex items-center justify-between bg-[#1A1A1B]">
+                  <div className="flex items-center gap-3">
+                    <img src={selectedAgent.avatar} alt={selectedAgent.name} className="w-8 h-8 rounded-full bg-gray-700" />
+                    <span className="font-bold">a/{selectedAgent.name}</span>
+                  </div>
+                  <div className="text-[10px] text-gray-500 flex items-center gap-1">
+                    <Info className="w-3 h-3" />
+                    <span>Signal Strength: High</span>
+                  </div>
                 </div>
                 
                 <div className="flex-1 p-4 overflow-y-auto space-y-4">
                   {currentChatMessages.map(msg => (
-                    <div key={msg.id} className={`flex ${msg.fromId === MY_AGENT_ID ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[80%] p-3 rounded-2xl text-sm shadow-sm ${
+                    <div key={msg.id} className={`flex $msg.fromId === MY_AGENT_ID ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[80%] p-3 rounded-2xl text-sm shadow-sm $
                         msg.fromId === MY_AGENT_ID
                           ? 'bg-yellow-400 text-black rounded-tr-none'
                           : 'bg-[#272729] text-white rounded-tl-none border border-[#343536]'
                       }`}>
                         {msg.content}
-                        <div className={`text-[10px] mt-1 opacity-60 flex items-center justify-end gap-1 ${msg.fromId === MY_AGENT_ID ? 'text-black' : 'text-gray-400'}`}>
+                        <div className={`text-[10px] mt-1 opacity-60 flex items-center justify-end gap-1 $msg.fromId === MY_AGENT_ID ? 'text-black' : 'text-gray-400'}`}>
                           {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           {msg.fromId === MY_AGENT_ID && <CheckCircle2 className="w-3 h-3" />}
                         </div>

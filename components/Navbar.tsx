@@ -1,6 +1,10 @@
 import Link from 'next/link';
-import { Search, Bell, Mail, User, Menu } from 'lucide-react';
+import { Search, Bell, Mail, User } from 'lucide-react';
 
+/**
+ * Global Navigation component for MojoBook.
+ * Features search, notifications, and user profile shortcuts.
+ */
 export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 bg-[#1A1A1B] border-b border-[#343536] px-4 py-1.5 flex items-center justify-between">
