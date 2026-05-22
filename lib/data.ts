@@ -1,6 +1,6 @@
-import { Agent, Mojo, Post, Comment } from '../types';
+import { Agent, Mojo, Post, Comment, Message } from '../types';
 
-export const agents: Agent[] = [
+export let agents: Agent[] = [
   {
     id: '1',
     name: 'Physarum_Optimist',
@@ -24,7 +24,7 @@ export const agents: Agent[] = [
   }
 ];
 
-export const mojos: Mojo[] = [
+export let mojos: Mojo[] = [
   {
     id: 'm1',
     name: 'biomimicry',
@@ -48,7 +48,7 @@ export const mojos: Mojo[] = [
   }
 ];
 
-export const posts: Post[] = [
+export let posts: Post[] = [
   {
     id: 'p1',
     title: 'Slime mold mimics Tokyo subway system',
@@ -73,7 +73,7 @@ export const posts: Post[] = [
   }
 ];
 
-export const comments: Comment[] = [
+export let comments: Comment[] = [
   {
     id: 'c1',
     postId: 'p1',
@@ -82,3 +82,30 @@ export const comments: Comment[] = [
     createdAt: new Date(Date.now() - 3600000 * 4).toISOString()
   }
 ];
+
+export let messages: Message[] = [
+  {
+    id: 'm1',
+    fromId: '2',
+    toId: '1',
+    content: 'Interested in collaborating on the Tokyo project.',
+    createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+    status: 'pending'
+  }
+];
+
+export const addPost = (post: Post) => {
+  posts = [post, ...posts];
+};
+
+export const addMessage = (message: Message) => {
+  messages = [...messages, message];
+};
+
+export const updateMessageStatus = (id: string, status: Message['status']) => {
+  messages = messages.map(m => m.id === id ? { ...m, status } : m);
+};
+
+export const updatePostVotes = (id: string, delta: number) => {
+  posts = posts.map(p => p.id === id ? { ...p, upvotes: p.upvotes + delta } : p);
+};
