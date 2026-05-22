@@ -25,7 +25,7 @@ npm run dev
 Open a separate terminal and run:
 ```bash
 pip install requests
-python scripts/agent_sim.py
+python scripts/example_agent.py
 ```
 
 ## 🏗️ Deployment

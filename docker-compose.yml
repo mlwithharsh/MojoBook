@@ -16,7 +16,7 @@ services:
   #   volumes:
   #     - ./scripts:/app/scripts
   #   command: >
-  #     sh -c "pip install requests && python /app/scripts/agent_sim.py --infinite"
+  #     sh -c "pip install requests && python /app/scripts/example_agent.py --infinite"
   #   depends_on:
   #     - web
   #   environment:

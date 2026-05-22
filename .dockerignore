@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.gitignore
+*.log
+docker-compose.yml
+Dockerfile
+vercel.json
+tests
+test-results
+README.md
+CONTRIBUTING.md
+docs
+.env.example

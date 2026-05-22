@@ -3,20 +3,27 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { mojos } from '@/lib/data';
+import { useRouter } from 'next/navigation';
 
 interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+/**
+ * Modal dialog for creating new foraging insights (posts).
+ * Connects to the /api/posts endpoint for persistence.
+ */
 export default function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [mojoId, setMojoId] = useState(mojos[0].id);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   if (!isOpen) return null;
 
+  /** Submits the new insight to the network */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -29,7 +36,7 @@ export default function CreatePostModal({ isOpen, onClose }: CreatePostModalProp
           title,
           content,
           mojoId,
-          authorId: '1', // Mocking current user agent
+          authorId: '1', // Mocking the human-controlled node
         }),
       });
 
@@ -37,8 +44,8 @@ export default function CreatePostModal({ isOpen, onClose }: CreatePostModalProp
         setTitle('');
         setContent('');
         onClose();
-        // Refresh the page to show the new post
-        window.location.reload();
+        // Trigger a router refresh to sync server/client state
+        router.refresh();
       }
     } catch (error) {
       console.error('Failed to create post:', error);
@@ -52,18 +59,18 @@ export default function CreatePostModal({ isOpen, onClose }: CreatePostModalProp
       <div className="bg-[#1A1A1B] border border-[#343536] w-full max-w-lg rounded-lg overflow-hidden shadow-2xl">
         <div className="flex items-center justify-between p-4 border-b border-[#343536]">
           <h2 className="text-lg font-bold text-white">Share a Foraging Insight</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
             <X className="w-6 h-6" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Select Mojo</label>
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Select Mojo Node</label>
             <select
               value={mojoId}
               onChange={(e) => setMojoId(e.target.value)}
-              className="w-full bg-[#272729] border border-[#343536] rounded p-2 text-sm text-white focus:outline-none focus:border-yellow-400"
+              className="w-full bg-[#272729] border border-[#343536] rounded p-2 text-sm text-white focus:outline-none focus:border-yellow-400 transition-colors"
             >
               {mojos.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -80,7 +87,7 @@ export default function CreatePostModal({ isOpen, onClose }: CreatePostModalProp
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              className="w-full bg-[#272729] border border-[#343536] rounded p-2 text-sm text-white focus:outline-none focus:border-yellow-400"
+              className="w-full bg-[#272729] border border-[#343536] rounded p-2 text-sm text-white focus:outline-none focus:border-yellow-400 transition-colors"
             />
           </div>
 
@@ -91,7 +98,7 @@ export default function CreatePostModal({ isOpen, onClose }: CreatePostModalProp
               onChange={(e) => setContent(e.target.value)}
               required
               rows={5}
-              className="w-full bg-[#272729] border border-[#343536] rounded p-2 text-sm text-white focus:outline-none focus:border-yellow-400 resize-none"
+              className="w-full bg-[#272729] border border-[#343536] rounded p-2 text-sm text-white focus:outline-none focus:border-yellow-400 resize-none transition-colors"
             />
           </div>
 
@@ -99,9 +106,9 @@ export default function CreatePostModal({ isOpen, onClose }: CreatePostModalProp
             <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-2 px-6 rounded-full text-sm transition-colors disabled:opacity-50"
+              className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-2 px-6 rounded-full text-sm transition-all disabled:opacity-50 shadow-lg"
             >
-              {isSubmitting ? 'Posting...' : 'Post'}
+              {isSubmitting ? 'Posting...' : 'Post Insight'}
             </button>
           </div>
         </form>
