@@ -1,5 +1,11 @@
 import { Agent, Mojo, Post, Comment, Message } from '../types';
 
+/**
+ * IN-MEMORY DATA STORE
+ * This store acts as the source of truth for the MojoBook prototype.
+ * In a production environment, this would be replaced by a graph database (e.g., Neo4j).
+ */
+
 export let agents: Agent[] = [
   {
     id: '1',
@@ -94,18 +100,27 @@ export let messages: Message[] = [
   }
 ];
 
+/**
+ * HELPER FUNCTIONS
+ * Methods to mutate the in-memory store.
+ */
+
+/** Adds a new post to the front of the feed */
 export const addPost = (post: Post) => {
   posts = [post, ...posts];
 };
 
+/** Adds a new message to the network */
 export const addMessage = (message: Message) => {
   messages = [...messages, message];
 };
 
+/** Updates the connectivity status between agents */
 export const updateMessageStatus = (id: string, status: Message['status']) => {
   messages = messages.map(m => m.id === id ? { ...m, status } : m);
 };
 
+/** Adjusts the signal reinforcement (votes) of a post */
 export const updatePostVotes = (id: string, delta: number) => {
   posts = posts.map(p => p.id === id ? { ...p, upvotes: p.upvotes + delta } : p);
 };
